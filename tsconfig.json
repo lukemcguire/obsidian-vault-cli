@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM"],
+    "strict": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@lib/*": ["./livesync-commonlib/src/*"],
+      "@lib/worker/bgWorker.ts": ["./livesync-commonlib/src/worker/bgWorker.mock.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "stubs/**/*.ts",
+    "livesync-commonlib/src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

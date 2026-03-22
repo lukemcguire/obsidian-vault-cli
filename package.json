@@ -1,0 +1,54 @@
+{
+  "name": "obsidian-vault",
+  "version": "1.0.0",
+  "description": "CLI tool for reading and writing encrypted Obsidian LiveSync vault via CouchDB",
+  "type": "module",
+  "bin": {
+    "obsidian-vault": "./bin/obsidian-vault"
+  },
+  "oclif": {
+    "bin": "obsidian-vault",
+    "dirname": "obsidian-vault",
+    "commands": {
+      "strategy": "explicit",
+      "target": "./src/commands/index.ts"
+    },
+    "topicSeparator": " "
+  },
+  "scripts": {
+    "list": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts list",
+    "read": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts read",
+    "search": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts search",
+    "meta": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts meta",
+    "write": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts write",
+    "delete": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts delete",
+    "dump": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts dump",
+    "patch": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts patch",
+    "grep": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts grep"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@oclif/core": "^4.2.10",
+    "diff-match-patch": "^1.0.5",
+    "fflate": "^0.8.2",
+    "minimatch": "^10.2.4",
+    "octagonal-wheels": "^0.1.45",
+    "pouchdb-adapter-http": "^9.0.0",
+    "pouchdb-core": "^9.0.0",
+    "pouchdb-errors": "^9.0.0",
+    "pouchdb-find": "^9.0.0",
+    "pouchdb-mapreduce": "^9.0.0",
+    "pouchdb-merge": "^9.0.0",
+    "pouchdb-replication": "^9.0.0",
+    "pouchdb-utils": "^9.0.0",
+    "transform-pouch": "^2.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "@types/pouchdb": "^6.4.2"
+  }
+}

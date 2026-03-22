@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Secrets — NEVER commit these
+.env
+setup-uri.txt
+
+# CouchDB runtime data
+couchdb-data/
+couchdb-etc/
+
+# Build output
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
