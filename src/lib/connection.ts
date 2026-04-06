@@ -250,7 +250,7 @@ export async function listFiles(dfm: DirectFileManipulator): Promise<VaultEntry[
 
     for (const [start, end] of ranges) {
         for await (const entry of dfm.liveSyncLocalDB.findEntries(start, end, {})) {
-            if (entry && "path" in entry) {
+            if (entry && "path" in entry && !(entry as any).deleted) {
                 files.push({
                     path: (entry as any).path as string,
                     id: (entry as any)._id as string,
