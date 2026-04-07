@@ -250,7 +250,16 @@ export async function createDFM(verbose = false): Promise<DirectFileManipulator>
         usePathObfuscation: vaultSettings.usePathObfuscation,
     };
 
-    // ── 7. Wait for ready ───────────────────────────────────────────────────
+    // ── 7. Suppress replicator — headless mode never replicates ─────────────
+    // The ReplicatorService hooks into onDatabaseInitialisation/onDatabaseHasReady
+    // and runs dispose/reinitialize cycles on every init. In headless mode, no
+    // replicator handler is registered, so _initialiseReplicator() always fails
+    // after doing wasted async work (reading settings, yielding microtasks,
+    // logging errors). Stub out getNewReplicator to return undefined immediately
+    // and short-circuit the error path.
+    (dfm.services as any).replicator.getNewReplicator.addHandler(async () => undefined);
+
+    // ── 8. Wait for ready ───────────────────────────────────────────────────
     await dfm.ready.promise;
 
     // Restore console after init (oclif needs console for its own output)

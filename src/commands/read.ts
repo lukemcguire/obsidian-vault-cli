@@ -5,7 +5,7 @@
  */
 
 import { Command, Args, Flags } from "@oclif/core";
-import { createDFM, listFiles } from "../lib/connection.ts";
+import { createDFM } from "../lib/connection.ts";
 import { isTextDocument, getDocData } from "@lib/common/utils.ts";
 import { decodeBinary } from "@lib/string_and_binary/convert.ts";
 
@@ -53,34 +53,24 @@ export default class Read extends Command {
                 // Read by document ID
                 const doc = await dfm.getById(args.path as any);
                 if (!doc || !("data" in doc)) {
-                    this.error(`Document not found: ${args.path}`);
+                    this.error(`Document not found: ${args.path}`, { exit: false });
+                    process.exitCode = 1;
+                    return;
                 }
                 outputDoc(doc);
             } else {
-                // Read by path
+                // Read by path — dfm.get() handles path→ID conversion
                 const doc = await dfm.get(args.path as any);
                 if (!doc || !("data" in doc)) {
-                    // Try listing files to find a match (path might need exact case)
-                    const { files } = await listFiles(dfm);
-                    const match = files.find(f =>
-                        f.path === args.path ||
-                        f.path.toLowerCase() === args.path.toLowerCase()
-                    );
-                    if (!match) {
-                        this.error(`File not found: ${args.path}`);
-                    }
-                    const docById = await dfm.getById(match.id);
-                    if (!docById || !("data" in docById)) {
-                        this.error(`Could not read file: ${args.path}`);
-                    }
-                    outputDoc(docById);
+                    this.error(`File not found: ${args.path}`, { exit: false });
+                    process.exitCode = 1;
                     return;
                 }
                 outputDoc(doc);
             }
         } finally {
-            await dfm.close();
-            process.exit(0);
+            try { await dfm.close(); } catch {}
+            process.exit();
         }
     }
 }

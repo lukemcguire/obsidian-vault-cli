@@ -12,7 +12,7 @@
  */
 
 import { Command, Args, Flags } from "@oclif/core";
-import { createDFM, listFiles } from "../lib/connection.ts";
+import { createDFM } from "../lib/connection.ts";
 import { isPlainText } from "@lib/string_and_binary/path.ts";
 
 async function readStdin(): Promise<string> {
@@ -25,23 +25,12 @@ async function readStdin(): Promise<string> {
 }
 
 async function readFile(dfm: any, filePath: string): Promise<string | null> {
-    // Try direct path first
+    // dfm.get() handles path→ID conversion directly
     const doc = await dfm.get(filePath);
     if (doc && "data" in doc) {
         return (doc as any).data.join("");
     }
-
-    // Fall back to case-insensitive listing match
-    const { files } = await listFiles(dfm);
-    const match = files.find((f: any) =>
-        f.path === filePath ||
-        f.path.toLowerCase() === filePath.toLowerCase()
-    );
-    if (!match) return null;
-
-    const docById = await dfm.getById(match.id);
-    if (!docById || !("data" in docById)) return null;
-    return (docById as any).data.join("");
+    return null;
 }
 
 async function writeFile(dfm: any, filePath: string, content: string): Promise<boolean> {

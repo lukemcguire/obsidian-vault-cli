@@ -5,9 +5,7 @@
  */
 
 import { Command, Args, Flags } from "@oclif/core";
-import { createDFM, listFiles } from "../lib/connection.ts";
-import { isTextDocument, getDocData } from "@lib/common/utils.ts";
-import { decodeBinary } from "@lib/string_and_binary/convert.ts";
+import { createDFM } from "../lib/connection.ts";
 
 export default class Meta extends Command {
     static description = "Show metadata for a vault file as JSON";
@@ -36,56 +34,34 @@ export default class Meta extends Command {
 
         const dfm = await createDFM(flags.verbose);
         try {
-            // Try to find the file in listing first
-            const { files } = await listFiles(dfm);
-            const match = files.find(f =>
-                f.path === args.path ||
-                f.path.toLowerCase() === args.path.toLowerCase()
-            );
-
-            if (!match) {
-                this.error(`File not found: ${args.path}`);
+            // Fetch metadata directly by path (dfm.get handles path→ID conversion)
+            const meta = await dfm.get(args.path as any, true);
+            if (!meta) {
+                this.error(`File not found: ${args.path}`, { exit: false });
+                process.exitCode = 1;
+                return;
             }
 
-            // Fetch the document for full metadata
-            const doc = await dfm.getById(match.id);
-            if (!doc) {
-                this.error(`Could not fetch document for: ${args.path}`);
-            }
-
+            // Build metadata from the meta result
             const metadata: Record<string, any> = {
-                path: match.path,
-                id: match.id,
-                mtime: match.mtime,
-                mtime_iso: match.mtime ? new Date(match.mtime).toISOString() : null,
-                ctime: match.ctime,
-                ctime_iso: match.ctime ? new Date(match.ctime).toISOString() : null,
-                size: match.size,
+                path: (meta as any).path ?? args.path,
+                id: (meta as any)._id,
+                mtime: (meta as any).mtime,
+                mtime_iso: (meta as any).mtime ? new Date((meta as any).mtime).toISOString() : null,
+                ctime: (meta as any).ctime,
+                ctime_iso: (meta as any).ctime ? new Date((meta as any).ctime).toISOString() : null,
+                size: (meta as any).size,
+                type: (meta as any).type,
             };
 
-            // Add doc-level fields if available
-            if (doc && typeof doc === "object") {
-                const d = doc as any;
-                if (d.children) metadata.chunk_count = d.children.length;
-                if (d.type) metadata.type = d.type;
-                const isBinary = !isTextDocument(d);
-                metadata.binary = isBinary;
-                if ("data" in d) {
-                    if (isBinary) {
-                        const buf = decodeBinary(d.data);
-                        metadata.content_bytes = buf.byteLength;
-                    } else {
-                        const content = getDocData(d.data);
-                        metadata.content_length = content.length;
-                        metadata.content_bytes = new TextEncoder().encode(content).byteLength;
-                    }
-                }
+            if ((meta as any).children) {
+                metadata.chunk_count = (meta as any).children.length;
             }
 
             this.log(JSON.stringify(metadata, null, 2));
         } finally {
-            await dfm.close();
-            process.exit(0);
+            try { await dfm.close(); } catch {}
+            process.exit();
         }
     }
 }

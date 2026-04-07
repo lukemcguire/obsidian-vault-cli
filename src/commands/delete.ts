@@ -5,7 +5,7 @@
  */
 
 import { Command, Args, Flags } from "@oclif/core";
-import { createDFM, listFiles } from "../lib/connection.ts";
+import { createDFM } from "../lib/connection.ts";
 
 export default class Delete extends Command {
     static description = "Delete a file from the vault";
@@ -60,27 +60,31 @@ export default class Delete extends Command {
         }
 
         const dfm = await createDFM(flags.verbose);
+        let exitCode = 0;
         try {
-            // Verify file exists first
-            const { files } = await listFiles(dfm);
-            const match = files.find(f =>
-                f.path === args.path ||
-                f.path.toLowerCase() === args.path.toLowerCase()
-            );
-
-            if (!match) {
-                this.error(`File not found: ${args.path}`);
+            // Verify file exists with a lightweight metadata lookup
+            // (dfm.delete does its own path→ID lookup, but we check first
+            // to give a clear "not found" error instead of a silent false)
+            const meta = await dfm.get(args.path as any, true);
+            if (!meta) {
+                exitCode = 1;
+                this.error(`File not found: ${args.path}`, { exit: false });
+                return;
             }
 
-            const ok = await dfm.delete(match.path as any);
+            const ok = await dfm.delete(args.path as any);
             if (ok) {
                 this.log(`Deleted: ${args.path}`);
             } else {
-                this.error(`Delete returned false for: ${args.path}`);
+                exitCode = 1;
+                this.error(`Delete returned false for: ${args.path}`, { exit: false });
             }
+        } catch (err: any) {
+            exitCode = 1;
+            this.error(err.message || String(err), { exit: false });
         } finally {
-            await dfm.close();
-            process.exit(0);
+            try { await dfm.close(); } catch {}
+            process.exit(exitCode);
         }
     }
 }
