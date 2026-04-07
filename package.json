@@ -13,7 +13,8 @@
       "strategy": "explicit",
       "target": "./dist/commands/index.cjs"
     },
-    "topicSeparator": " "
+    "topicSeparator": " ",
+    "additionalHelpFlags": ["-h"]
   },
   "scripts": {
     "list": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts list",
