@@ -28,6 +28,7 @@ if (typeof globalThis.localStorage === "undefined") {
 import { DirectFileManipulator } from "../../livesync-commonlib/src/API/DirectFileManipulator.ts";
 import type { DirectFileManipulatorOptions } from "../../livesync-commonlib/src/API/DirectFileManipulatorV2.ts";
 import { DEFAULT_SETTINGS } from "../../livesync-commonlib/src/common/types.ts";
+import { isAnyNote } from "../../livesync-commonlib/src/common/utils.ts";
 import { setGlobalLogFunction } from "octagonal-wheels/common/logger";
 
 // ---------------------------------------------------------------------------
@@ -231,36 +232,43 @@ export async function createDFM(verbose = false): Promise<DirectFileManipulator>
 export interface VaultEntry {
     path: string;
     id: string;
-    mtime?: number;
-    ctime?: number;
-    size?: number;
+    mtime: number;
+    ctime: number;
+    size: number;
 }
 
-export async function listFiles(dfm: DirectFileManipulator): Promise<VaultEntry[]> {
+export interface ListFilesResult {
+    files: VaultEntry[];
+    last_seq: string | number;
+}
+
+export async function listFiles(
+    dfm: DirectFileManipulator,
+    since: string | number = "0"
+): Promise<ListFilesResult> {
     const files: VaultEntry[] = [];
 
-    // These ranges cover all non-chunk doc types (skipping h: chunks)
-    const ranges = [
-        ["", "h:"],
-        [`h:\u{10ffff}`, "i:"],
-        [`i:\u{10ffff}`, "ix:"],
-        [`ix:\u{10ffff}`, "ps:"],
-        [`ps:\u{10ffff}`, "\u{10ffff}"],
-    ] as const;
+    const result = await dfm.liveSyncLocalDB.localDatabase.changes({
+        include_docs: true,
+        since,
+        live: false,
+    });
 
-    for (const [start, end] of ranges) {
-        for await (const entry of dfm.liveSyncLocalDB.findEntries(start, end, {})) {
-            if (entry && "path" in entry && !(entry as any).deleted) {
-                files.push({
-                    path: (entry as any).path as string,
-                    id: (entry as any)._id as string,
-                    mtime: (entry as any).mtime,
-                    ctime: (entry as any).ctime,
-                    size: (entry as any).size,
-                });
-            }
-        }
+    for (const change of result.results) {
+        const doc = change.doc as any;
+        if (!doc) continue;
+        // Skip chunks (type === "leaf"), internal docs, and deleted entries
+        if (!isAnyNote(doc)) continue;
+        if (doc._deleted || doc.deleted) continue;
+
+        files.push({
+            path:  doc.path  as string,
+            id:    doc._id   as string,
+            mtime: doc.mtime as number,
+            ctime: doc.ctime as number,
+            size:  doc.size  as number,
+        });
     }
 
-    return files;
+    return { files, last_seq: result.last_seq };
 }

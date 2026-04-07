@@ -42,7 +42,7 @@ export default class List extends Command {
 
         const dfm = await createDFM(flags.verbose);
         try {
-            let files = await listFiles(dfm);
+            let { files } = await listFiles(dfm);
 
             // Filter by folder prefix if provided
             if (args.path) {

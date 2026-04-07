@@ -61,7 +61,7 @@ export default class Read extends Command {
                 const doc = await dfm.get(args.path as any);
                 if (!doc || !("data" in doc)) {
                     // Try listing files to find a match (path might need exact case)
-                    const files = await listFiles(dfm);
+                    const { files } = await listFiles(dfm);
                     const match = files.find(f =>
                         f.path === args.path ||
                         f.path.toLowerCase() === args.path.toLowerCase()

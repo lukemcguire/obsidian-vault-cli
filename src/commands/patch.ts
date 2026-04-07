@@ -32,7 +32,7 @@ async function readFile(dfm: any, filePath: string): Promise<string | null> {
     }
 
     // Fall back to case-insensitive listing match
-    const files = await listFiles(dfm);
+    const { files } = await listFiles(dfm);
     const match = files.find((f: any) =>
         f.path === filePath ||
         f.path.toLowerCase() === filePath.toLowerCase()

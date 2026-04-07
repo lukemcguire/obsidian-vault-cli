@@ -54,7 +54,7 @@ export default class Search extends Command {
 
         const dfm = await createDFM(flags.verbose);
         try {
-            const files = await listFiles(dfm);
+            const { files } = await listFiles(dfm);
             const matched = files
                 .filter(f => regex.test(f.path))
                 .sort((a, b) => a.path.localeCompare(b.path));

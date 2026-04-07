@@ -77,6 +77,32 @@ obsidian-vault delete "Notes/old.md" --yes
 obsidian-vault dump ./vault-export
 ```
 
+### Mirror vault (incremental sync)
+
+```bash
+# Full sync (first run)
+obsidian-vault mirror ./vault-mirror
+
+# Subsequent runs only download changed files
+obsidian-vault mirror ./vault-mirror
+
+# Delete local files removed from vault
+obsidian-vault mirror ./vault-mirror --delete
+
+# Preview changes without writing
+obsidian-vault mirror ./vault-mirror --dry-run
+
+# Suppress per-file OK/SKIP output (cron-friendly)
+obsidian-vault mirror ./vault-mirror --quiet
+```
+
+The `mirror` command persists a `.mirror-state.json` file in the output
+directory tracking the CouchDB changes feed cursor. First run syncs
+all files; subsequent runs only process changes. Suitable for cron jobs.
+
+Local files newer than their vault counterpart are treated as conflicts
+and skipped (not overwritten).
+
 ## Agent best practices
 
 - **Prefer `patch` over `write` for edits.** `patch --old/--new` for surgical changes, `--append` for additions. Only use `write` for new files or full replacements.
