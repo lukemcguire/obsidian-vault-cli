@@ -37,7 +37,15 @@ cd obsidian-vault-cli
 npm install
 ```
 
-### 3. Configure
+### 3. Build
+
+```bash
+npm run build
+```
+
+This compiles the CLI to `dist/` using tsup, eliminating the tsx startup overhead. The built bundle is what `obsidian-vault` runs.
+
+### 4. Configure
 
 Copy the example config to the XDG config directory:
 
@@ -64,7 +72,7 @@ DB_NAME=obsidiannotes
 2. **`~/.config/obsidian-vault/config`** — XDG standard (`XDG_CONFIG_HOME` is respected)
 3. **Repo-root `.env`** — deprecated fallback; prints a warning if used
 
-### 4. Start CouchDB (if not already running)
+### 5. Start CouchDB (if not already running)
 
 ```bash
 docker compose -f couchdb/docker-compose.yml up -d
@@ -72,15 +80,15 @@ docker compose -f couchdb/docker-compose.yml up -d
 
 Or use your existing CouchDB instance — just point `COUCHDB_URL` at it.
 
-### 5. Install the CLI
+### 6. Install the CLI
 
 ```bash
 bash install.sh
 ```
 
-This symlinks `obsidian-vault` into `~/.local/bin/`. Make sure it's in your `PATH`.
+This builds the bundle (if not already built), migrates config from a legacy `.env` if found, and symlinks `obsidian-vault` into `~/.local/bin/`. Make sure it's in your `PATH`.
 
-### 6. Verify
+### 7. Verify
 
 ```bash
 obsidian-vault list
@@ -297,13 +305,14 @@ All commands support `--verbose` (`-v`) for detailed internal logging.
 obsidian-vault-cli/
 ├── livesync-commonlib/     # git submodule — Obsidian LiveSync's core library
 ├── src/
-│   ├── commands/           # CLI commands (list, read, write, patch, grep, ...)
+│   ├── commands/           # CLI commands (list, read, write, patch, grep, mirror, ...)
 │   ├── lib/
 │   │   └── connection.ts   # DFM factory, vault settings auto-detection
 │   └── index.ts            # oclif entry point
+├── dist/                   # Compiled bundle (tsup output, gitignored)
 ├── stubs/                  # Node.js stubs for Obsidian/Svelte APIs
 ├── bin/
-│   └── obsidian-vault      # Shell wrapper
+│   └── obsidian-vault      # Shell wrapper (runs dist/index.cjs)
 ├── couchdb/
 │   ├── docker-compose.yml  # CouchDB container
 │   └── docker.ini          # CouchDB config (CORS, auth, limits)
@@ -313,6 +322,7 @@ obsidian-vault-cli/
 │   └── obsidian-livesync.md  # Agent skill file for Claude Code / OpenCode
 ├── .env.example
 ├── install.sh
+├── tsup.config.ts          # Build config with path alias plugin
 └── package.json
 ```
 
