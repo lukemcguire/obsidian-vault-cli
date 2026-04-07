@@ -11,8 +11,4 @@ done
 SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
 CLI_DIR="$(dirname "$SCRIPT_DIR")"
 
-# NODE_ENV=development tells oclif to load commands from the target
-# module directly rather than requiring a pre-generated manifest.
-export NODE_ENV="${NODE_ENV:-development}"
-
-exec node "$CLI_DIR/dist/index.cjs" "$@"
+exec node --no-warnings "$CLI_DIR/dist/index.cjs" "$@"

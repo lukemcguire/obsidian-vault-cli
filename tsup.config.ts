@@ -112,5 +112,9 @@ export default defineConfig({
     minify: false,
     clean: true,
     noExternal: ["octagonal-wheels"],
+    sourcemap: true,
     esbuildPlugins: [pathAliasPlugin],
+    esbuildOptions(options) {
+        options.logOverride = { "empty-import-meta": "silent" };
+    },
 });
