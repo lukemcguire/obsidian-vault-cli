@@ -5,6 +5,12 @@ set -e
 CLI_DIR="$(cd "$(dirname "$0")" && pwd)"
 BIN_DIR="${HOME}/.local/bin"
 
+# Build compiled bundle if not already present
+if [ ! -f "$CLI_DIR/dist/index.cjs" ]; then
+    echo "Building..."
+    (cd "$CLI_DIR" && npm run build)
+fi
+
 # Set up XDG config directory
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/obsidian-vault"
 mkdir -p "$CONFIG_DIR"

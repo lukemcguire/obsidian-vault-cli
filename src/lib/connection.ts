@@ -8,9 +8,13 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// CJS (built): __dirname is native. ESM (dev): derive from import.meta.url.
+declare const __dirname: string | undefined;
+const _dirname: string =
+    typeof __dirname === "string"
+        ? __dirname
+        : path.dirname(new URL(import.meta.url).pathname);
 
 // ── 1. Polyfill localStorage (BEFORE any imports from commonlib) ────────────
 if (typeof globalThis.localStorage === "undefined") {
@@ -72,7 +76,7 @@ export function loadConfig(): VaultConfig {
     const xdgEnv = loadEnvFile(xdgPath);
 
     // Legacy fallback: repo-root .env (path only valid from source)
-    const legacyPath = path.join(__dirname, "..", "..", ".env");
+    const legacyPath = path.join(_dirname, "..", "..", ".env");
     const legacyEnv = loadEnvFile(legacyPath);
 
     if (

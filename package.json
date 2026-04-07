@@ -11,7 +11,7 @@
     "dirname": "obsidian-vault",
     "commands": {
       "strategy": "explicit",
-      "target": "./src/commands/index.ts"
+      "target": "./dist/commands/index.cjs"
     },
     "topicSeparator": " "
   },
@@ -24,7 +24,8 @@
     "delete": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts delete",
     "dump": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts dump",
     "patch": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts patch",
-    "grep": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts grep"
+    "grep": "node --import tsx/esm --experimental-loader ./path-loader.mjs src/index.ts grep",
+    "build": "tsup"
   },
   "keywords": [],
   "author": "",
@@ -49,6 +50,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
-    "@types/pouchdb": "^6.4.2"
+    "@types/pouchdb": "^6.4.2",
+    "tsup": "^8.5.1"
   }
 }
