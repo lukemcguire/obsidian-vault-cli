@@ -6,6 +6,8 @@
 
 import { Command, Args, Flags } from "@oclif/core";
 import { createDFM, listFiles } from "../lib/connection.ts";
+import { isTextDocument, getDocData } from "@lib/common/utils.ts";
+import { decodeBinary } from "@lib/string_and_binary/convert.ts";
 
 export default class Meta extends Command {
     static description = "Show metadata for a vault file as JSON";
@@ -66,10 +68,17 @@ export default class Meta extends Command {
                 const d = doc as any;
                 if (d.children) metadata.chunk_count = d.children.length;
                 if (d.type) metadata.type = d.type;
+                const isBinary = !isTextDocument(d);
+                metadata.binary = isBinary;
                 if ("data" in d) {
-                    const content = d.data.join("");
-                    metadata.content_length = content.length;
-                    metadata.content_bytes = new TextEncoder().encode(content).byteLength;
+                    if (isBinary) {
+                        const buf = decodeBinary(d.data);
+                        metadata.content_bytes = buf.byteLength;
+                    } else {
+                        const content = getDocData(d.data);
+                        metadata.content_length = content.length;
+                        metadata.content_bytes = new TextEncoder().encode(content).byteLength;
+                    }
                 }
             }
 

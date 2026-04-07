@@ -11,6 +11,8 @@
 
 import { Command, Args, Flags } from "@oclif/core";
 import { createDFM, listFiles } from "../lib/connection.ts";
+import { isPlainText } from "@lib/string_and_binary/path.ts";
+import { getDocData } from "@lib/common/utils.ts";
 
 export default class Grep extends Command {
     static description = "Search file contents by regex within a vault folder (decrypts on the fly)";
@@ -85,10 +87,18 @@ export default class Grep extends Command {
                 if (matchCount >= flags["max-results"]!) break;
 
                 try {
+                    // Skip binary files — regex search on encoded chunks is meaningless
+                    if (!isPlainText(file.path)) {
+                        if (flags.verbose) {
+                            process.stderr.write(`  (skipped binary: ${file.path})\n`);
+                        }
+                        continue;
+                    }
+
                     const doc = await dfm.getById(file.id);
                     if (!doc || !("data" in doc)) continue;
 
-                    const content = (doc as any).data.join("");
+                    const content = getDocData((doc as any).data);
                     regex.lastIndex = 0;
 
                     if (regex.test(content)) {

@@ -6,6 +6,16 @@
 
 import { Command, Args, Flags } from "@oclif/core";
 import { createDFM, listFiles } from "../lib/connection.ts";
+import { isTextDocument, getDocData } from "@lib/common/utils.ts";
+import { decodeBinary } from "@lib/string_and_binary/convert.ts";
+
+function outputDoc(doc: any): void {
+    if (isTextDocument(doc)) {
+        process.stdout.write(getDocData(doc.data));
+    } else {
+        process.stdout.write(Buffer.from(decodeBinary(doc.data)));
+    }
+}
 
 export default class Read extends Command {
     static description = "Print decrypted content of a vault file to stdout";
@@ -45,8 +55,7 @@ export default class Read extends Command {
                 if (!doc || !("data" in doc)) {
                     this.error(`Document not found: ${args.path}`);
                 }
-                const content = (doc as any).data.join("");
-                process.stdout.write(content);
+                outputDoc(doc);
             } else {
                 // Read by path
                 const doc = await dfm.get(args.path as any);
@@ -64,12 +73,10 @@ export default class Read extends Command {
                     if (!docById || !("data" in docById)) {
                         this.error(`Could not read file: ${args.path}`);
                     }
-                    const content = (docById as any).data.join("");
-                    process.stdout.write(content);
+                    outputDoc(docById);
                     return;
                 }
-                const content = (doc as any).data.join("");
-                process.stdout.write(content);
+                outputDoc(doc);
             }
         } finally {
             await dfm.close();

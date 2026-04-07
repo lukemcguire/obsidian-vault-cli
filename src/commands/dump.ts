@@ -6,6 +6,8 @@
 
 import { Command, Args, Flags } from "@oclif/core";
 import { createDFM, listFiles } from "../lib/connection.ts";
+import { isTextDocument, getDocData } from "@lib/common/utils.ts";
+import { decodeBinary } from "@lib/string_and_binary/convert.ts";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -71,11 +73,13 @@ export default class Dump extends Command {
                     if (!doc || !("data" in doc)) {
                         throw new Error("No data in document");
                     }
-                    const content = (doc as any).data.join("");
-
                     // Create directory and write file
                     fs.mkdirSync(outDir, { recursive: true });
-                    fs.writeFileSync(outPath, content, "utf-8");
+                    if (isTextDocument(doc as any)) {
+                        fs.writeFileSync(outPath, getDocData((doc as any).data), "utf-8");
+                    } else {
+                        fs.writeFileSync(outPath, Buffer.from(decodeBinary((doc as any).data)));
+                    }
 
                     if (!flags.quiet) {
                         this.log(`  OK  ${file.path}`);

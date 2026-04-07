@@ -13,6 +13,7 @@
 
 import { Command, Args, Flags } from "@oclif/core";
 import { createDFM, listFiles } from "../lib/connection.ts";
+import { isPlainText } from "@lib/string_and_binary/path.ts";
 
 async function readStdin(): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -101,6 +102,14 @@ export default class Patch extends Command {
         // Validate: must use either --old/--new or --append
         if (!isAppendMode && !flags.old) {
             this.error("Must specify either --old/--new for replacement or --append for appending.");
+        }
+
+        // Reject binary files — text patch operations on binary data cause corruption
+        if (!isPlainText(args.path)) {
+            this.error(
+                `patch does not support binary files: ${args.path}\n` +
+                "Use 'write' with piped binary content to replace a binary file."
+            );
         }
 
         const dfm = await createDFM(flags.verbose);
