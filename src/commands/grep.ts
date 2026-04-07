@@ -71,7 +71,7 @@ export default class Grep extends Command {
         const dfm = await createDFM(flags.verbose);
         try {
             // 1. List files under the path prefix
-            const allFiles = await listFiles(dfm);
+            const { files: allFiles } = await listFiles(dfm);
             const scopedFiles = allFiles.filter(f => f.path.startsWith(flags.path));
 
             if (scopedFiles.length === 0) {

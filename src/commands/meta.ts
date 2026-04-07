@@ -37,7 +37,7 @@ export default class Meta extends Command {
         const dfm = await createDFM(flags.verbose);
         try {
             // Try to find the file in listing first
-            const files = await listFiles(dfm);
+            const { files } = await listFiles(dfm);
             const match = files.find(f =>
                 f.path === args.path ||
                 f.path.toLowerCase() === args.path.toLowerCase()

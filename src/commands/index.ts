@@ -12,6 +12,7 @@ import Delete from "./delete.ts";
 import Dump from "./dump.ts";
 import Patch from "./patch.ts";
 import Grep from "./grep.ts";
+import Mirror from "./mirror.ts";
 
 const commands = {
     list: List,
@@ -23,6 +24,7 @@ const commands = {
     dump: Dump,
     patch: Patch,
     grep: Grep,
+    mirror: Mirror,
 };
 
 export default commands;

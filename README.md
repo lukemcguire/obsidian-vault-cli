@@ -174,6 +174,29 @@ obsidian-vault delete "Notes/old.md" --yes    # --yes skips confirmation
 obsidian-vault dump ./vault-export
 ```
 
+### `mirror` — Incremental local sync
+
+Sync vault files to a local directory. First run pulls everything; subsequent runs only download changed files. Designed for cron jobs and automated backups.
+
+```bash
+# Full sync (first run)
+obsidian-vault mirror ./vault-mirror
+
+# Subsequent runs — only changed files
+obsidian-vault mirror ./vault-mirror
+
+# Delete local files that were removed from the vault
+obsidian-vault mirror ./vault-mirror --delete
+
+# Preview without writing
+obsidian-vault mirror ./vault-mirror --dry-run
+
+# Quiet mode (cron-friendly, errors still shown)
+obsidian-vault mirror ./vault-mirror --quiet
+```
+
+Mirror state (CouchDB changes cursor) is persisted in `<output-dir>/.mirror-state.json`. Local files newer than their vault counterpart are treated as conflicts and skipped.
+
 ## Agent integration
 
 This CLI is designed to be used by AI coding agents. Drop the skill file into your agent's configuration:

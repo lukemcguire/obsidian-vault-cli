@@ -51,7 +51,7 @@ export default class Dump extends Command {
 
         const dfm = await createDFM(flags.verbose);
         try {
-            const files = await listFiles(dfm);
+            const { files } = await listFiles(dfm);
 
             if (files.length === 0) {
                 this.log("Vault is empty, nothing to dump.");

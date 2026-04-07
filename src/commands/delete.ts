@@ -62,7 +62,7 @@ export default class Delete extends Command {
         const dfm = await createDFM(flags.verbose);
         try {
             // Verify file exists first
-            const files = await listFiles(dfm);
+            const { files } = await listFiles(dfm);
             const match = files.find(f =>
                 f.path === args.path ||
                 f.path.toLowerCase() === args.path.toLowerCase()
