@@ -39,11 +39,14 @@ npm install
 
 ### 3. Configure
 
+Copy the example config to the XDG config directory:
+
 ```bash
-cp .env.example .env
+mkdir -p ~/.config/obsidian-vault
+cp .env.example ~/.config/obsidian-vault/config
 ```
 
-Edit `.env` with your CouchDB credentials and LiveSync passphrase:
+Edit `~/.config/obsidian-vault/config` with your CouchDB credentials and LiveSync passphrase:
 
 ```dotenv
 COUCHDB_USER=your_admin_user
@@ -54,6 +57,12 @@ DB_NAME=obsidiannotes
 ```
 
 > The `E2EE_PASSPHRASE` is the end-to-end encryption passphrase you set in the LiveSync plugin. It is **never** stored in CouchDB — you must always provide it externally.
+
+**Config search order** (high → low priority):
+
+1. **Environment variables** — always wins; Docker/CI-friendly
+2. **`~/.config/obsidian-vault/config`** — XDG standard (`XDG_CONFIG_HOME` is respected)
+3. **Repo-root `.env`** — deprecated fallback; prints a warning if used
 
 ### 4. Start CouchDB (if not already running)
 

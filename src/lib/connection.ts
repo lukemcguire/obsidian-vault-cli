@@ -1,11 +1,12 @@
 /**
  * connection.ts — Singleton factory for DirectFileManipulator
  *
- * Reads credentials from env vars or ~/services/obsidian-livesync/.env
- * Auto-detects ALL vault settings from CouchDB at runtime.
+ * Reads credentials from env vars, XDG config (~/.config/obsidian-vault/config),
+ * or legacy repo-root .env. Auto-detects ALL vault settings from CouchDB at runtime.
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -58,22 +59,53 @@ export interface VaultConfig {
     passphrase: string;
 }
 
+function getConfigPath(): string {
+    const xdgConfig = process.env.XDG_CONFIG_HOME;
+    const configDir = xdgConfig
+        ? path.join(xdgConfig, "obsidian-vault")
+        : path.join(os.homedir(), ".config", "obsidian-vault");
+    return path.join(configDir, "config");
+}
+
 export function loadConfig(): VaultConfig {
-    // Try loading .env from repo root
-    const envPath = path.join(__dirname, "..", "..", ".env");
-    const fileEnv = loadEnvFile(envPath);
+    const xdgPath = getConfigPath();
+    const xdgEnv = loadEnvFile(xdgPath);
+
+    // Legacy fallback: repo-root .env (path only valid from source)
+    const legacyPath = path.join(__dirname, "..", "..", ".env");
+    const legacyEnv = loadEnvFile(legacyPath);
+
+    if (
+        Object.keys(legacyEnv).length > 0 &&
+        Object.keys(xdgEnv).length === 0
+    ) {
+        process.stderr.write(
+            `[obsidian-vault] Deprecated: config loaded from ${legacyPath}\n` +
+            `  Move it to ${xdgPath} to silence this warning.\n`
+        );
+    }
+
+    // XDG takes precedence over legacy
+    const fileEnv = { ...legacyEnv, ...xdgEnv };
 
     const get = (key: string, fallback?: string): string => {
         const val = process.env[key] || fileEnv[key] || fallback;
-        if (!val) throw new Error(`Missing required config: ${key}. Set it in ${envPath} or as an env var.`);
+        if (!val) {
+            throw new Error(
+                `Missing required config: ${key}.\n` +
+                `  Set it in ${xdgPath} or as an environment variable.`
+            );
+        }
         return val;
     };
 
     return {
-        url: process.env.COUCHDB_URL || fileEnv.COUCHDB_URL || fileEnv.HOSTNAME || "http://127.0.0.1:5984",
-        username: get("COUCHDB_USER"),
-        password: get("COUCHDB_PASSWORD"),
-        database: process.env.DB_NAME || fileEnv.DB_NAME || "obsidiannotes",
+        url:        process.env.COUCHDB_URL  || fileEnv.COUCHDB_URL  ||
+                    fileEnv.HOSTNAME          || "http://127.0.0.1:5984",
+        username:   get("COUCHDB_USER"),
+        password:   get("COUCHDB_PASSWORD"),
+        database:   process.env.DB_NAME      || fileEnv.DB_NAME      ||
+                    "obsidiannotes",
         passphrase: get("E2EE_PASSPHRASE"),
     };
 }
