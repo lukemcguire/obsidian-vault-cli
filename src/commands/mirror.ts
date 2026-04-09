@@ -180,9 +180,7 @@ export default class Mirror extends Command {
                     // Preserve vault mtime so next run skips unchanged files
                     fs.utimesSync(localPath, file.mtime / 1000, file.mtime / 1000);
 
-                    if (!flags.quiet || isNew) {
-                        this.logToStderr(`  ${label}  ${file.path}`);
-                    }
+                    this.logToStderr(`  ${label}  ${file.path}`);
                     if (isNew) newCount++; else updatedCount++;
                 } catch (err) {
                     this.logToStderr(`  FAIL  ${file.path}: ${(err as Error).message?.slice(0, 80)}`);
