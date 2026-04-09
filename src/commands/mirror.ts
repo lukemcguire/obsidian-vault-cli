@@ -140,7 +140,9 @@ export default class Mirror extends Command {
                     }
 
                     // Conflict — local file is newer than vault version
-                    if (localStat.mtimeMs > file.mtime) {
+                    // Use 1s tolerance to avoid false positives from mtime rounding
+                    // (vault stores ms, filesystem has ns precision)
+                    if (localStat.mtimeMs > file.mtime + 1000) {
                         this.logToStderr(`  CONFLICT  ${file.path}`);
                         this.logToStderr(`             local:  ${formatTimestamp(localStat.mtimeMs)}`);
                         this.logToStderr(`             vault:  ${formatTimestamp(file.mtime)}`);
