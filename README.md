@@ -25,7 +25,7 @@ Obsidian LiveSync encrypts everything in CouchDB. There's no way to read or writ
 ### 1. Clone
 
 ```bash
-git clone --recursive https://github.com/lucafanselau/obsidian-vault-cli.git
+git clone --recursive https://github.com/lukemcguire/obsidian-vault-cli.git
 cd obsidian-vault-cli
 ```
 
