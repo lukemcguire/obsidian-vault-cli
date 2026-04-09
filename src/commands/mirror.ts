@@ -127,10 +127,11 @@ export default class Mirror extends Command {
                 }
 
                 if (localStat) {
-                    // Unchanged — same mtime and size
+                    // Unchanged — same size and mtime within 1s tolerance
+                    // (filesystem truncates to second precision via utimesSync)
                     if (
-                        localStat.mtimeMs === file.mtime &&
-                        localStat.size === file.size
+                        localStat.size === file.size &&
+                        Math.abs(localStat.mtimeMs - file.mtime) < 1000
                     ) {
                         if (!flags.quiet) {
                             this.logToStderr(`  SKIP  ${file.path}  (mtime match)`);
