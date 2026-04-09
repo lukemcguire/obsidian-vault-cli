@@ -33,7 +33,6 @@ if (typeof globalThis.localStorage === "undefined") {
 import { DirectFileManipulator } from "../../livesync-commonlib/src/API/DirectFileManipulator.ts";
 import type { DirectFileManipulatorOptions } from "../../livesync-commonlib/src/API/DirectFileManipulatorV2.ts";
 import { DEFAULT_SETTINGS } from "../../livesync-commonlib/src/common/types.ts";
-import { isAnyNote } from "../../livesync-commonlib/src/common/utils.ts";
 import { setGlobalLogFunction } from "octagonal-wheels/common/logger";
 
 // ---------------------------------------------------------------------------
@@ -293,27 +292,35 @@ export async function listFiles(
 ): Promise<ListFilesResult> {
     const files: VaultEntry[] = [];
 
-    const result = await dfm.liveSyncLocalDB.localDatabase.changes({
-        include_docs: true,
-        since,
-        live: false,
-    });
+    // ID ranges that cover all non-chunk doc types.
+    // Chunks live in the "h:" prefix range and make up the vast majority of docs;
+    // skipping them at the query level avoids pulling thousands of irrelevant docs.
+    const ranges: [string, string][] = [
+        ["", "h:"],
+        [`h:\u{10ffff}`, "i:"],
+        [`i:\u{10ffff}`, "ix:"],
+        [`ix:\u{10ffff}`, "ps:"],
+        [`ps:\u{10ffff}`, "\u{10ffff}"],
+    ];
 
-    for (const change of result.results) {
-        const doc = change.doc as any;
-        if (!doc) continue;
-        // Skip chunks (type === "leaf"), internal docs, and deleted entries
-        if (!isAnyNote(doc)) continue;
-        if (doc._deleted || doc.deleted) continue;
+    for (const [start, end] of ranges) {
+        for await (const entry of dfm.liveSyncLocalDB.findEntries(start, end, {})) {
+            const doc = entry as any;
+            if (!doc || !("path" in doc)) continue;
+            // Filter soft-deleted entries (app-level deletion, not PouchDB tombstones)
+            if (doc._deleted || doc.deleted) continue;
 
-        files.push({
-            path:  doc.path  as string,
-            id:    doc._id   as string,
-            mtime: doc.mtime as number,
-            ctime: doc.ctime as number,
-            size:  doc.size  as number,
-        });
+            files.push({
+                path:  doc.path  as string,
+                id:    doc._id   as string,
+                mtime: doc.mtime as number,
+                ctime: doc.ctime as number,
+                size:  doc.size  as number,
+            });
+        }
     }
 
-    return { files, last_seq: result.last_seq };
+    // Grab current update_seq for callers that track incremental state.
+    const info = await dfm.liveSyncLocalDB.localDatabase.info();
+    return { files, last_seq: info.update_seq };
 }
