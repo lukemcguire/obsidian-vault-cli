@@ -190,27 +190,36 @@ export default class Mirror extends Command {
             // Handle --delete
             let deletedCount = 0;
             if (flags.delete) {
-                // Need full vault listing to know what's deleted
-                // For incremental runs, do a full listFiles("0") to get authoritative set
-                let allVaultFiles: Set<string>;
-                if (isFullRun) {
-                    allVaultFiles = new Set(files.map(f => f.path));
-                } else {
-                    const { files: fullFiles } = await listFiles(dfm, "0");
-                    allVaultFiles = new Set(fullFiles.map(f => f.path));
-                }
+                // Only delete files for documents explicitly deleted from CouchDB.
+                // Query the changes feed for tombstones since the last successful mirror.
+                // A file that was never in CouchDB (local-only) is left alone.
+                if (!isFullRun && state) {
+                    const changes = await (dfm.liveSyncLocalDB as any).localDatabase.changes({
+                        since: state.last_seq,
+                        include_docs: true,
+                        deleted: "ok",
+                    });
 
-                // Walk output directory and delete files not in vault
-                const localFiles = walkDir(outputDir);
-                for (const relPath of localFiles) {
-                    if (relPath === ".mirror-state.json") continue;
-                    if (!allVaultFiles.has(relPath)) {
-                        const delPath = path.join(outputDir, relPath);
-                        this.logToStderr(`  DEL   ${relPath}`);
-                        if (!dryRun) {
-                            fs.unlinkSync(delPath);
+                    for (const change of changes.results) {
+                        if (!change.deleted) continue;
+                        const doc = change.doc as any;
+                        if (!doc || !("path" in doc)) continue;
+
+                        const delPath = path.join(outputDir, doc.path);
+                        let localStat: fs.Stats | null = null;
+                        try {
+                            localStat = fs.statSync(delPath);
+                        } catch {
+                            // ENOENT — already gone locally
                         }
-                        deletedCount++;
+
+                        if (localStat) {
+                            this.logToStderr(`  DEL   ${doc.path}  (deleted in vault)`);
+                            if (!dryRun) {
+                                fs.unlinkSync(delPath);
+                            }
+                            deletedCount++;
+                        }
                     }
                 }
             }
